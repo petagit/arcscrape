@@ -27,4 +27,14 @@ ENV/
 .idea/
 
 # macOS
-.DS_Store
+
+# Node/Next artifacts
+web/node_modules/
+web/.next/
+web/.turbo/
+web/out/
+web/.vercel/
+web/.DS_Store
+web/npm-debug.log*
+web/yarn-error.log
+web/pnpm-debug.log
