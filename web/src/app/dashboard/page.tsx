@@ -30,6 +30,8 @@ export default function Dashboard() {
   const [obs, setObs] = useState<Obs[]>([]);
   const [q, setQ] = useState("");
   const [store, setStore] = useState<string>("");
+  const [rangeHours] = useState<number>(48);
+  const [snapshotAt] = useState<Date>(new Date());
 
   useEffect(() => {
     (async () => {
@@ -47,8 +49,14 @@ export default function Dashboard() {
     return key.includes(q.toLowerCase()) && storeOk;
   });
 
+  const msCutoff = Date.now() - rangeHours * 60 * 60 * 1000;
+  const recentObs = obs.filter((o) => {
+    const t = Date.parse(o.crawl_ts);
+    return !Number.isNaN(t) && t >= msCutoff;
+  });
+
   const obsByHash = new Map<string, Obs>();
-  for (const o of obs) {
+  for (const o of recentObs) {
     const prev = obsByHash.get(o.hash_key);
     if (!prev || new Date(o.crawl_ts) > new Date(prev.crawl_ts)) obsByHash.set(o.hash_key, o);
   }
@@ -78,6 +86,13 @@ export default function Dashboard() {
   return (
     <main className="mx-auto max-w-6xl p-6 space-y-6">
       <h1 className="text-2xl font-semibold">Inventory Dashboard</h1>
+      <div className="flex items-center gap-4">
+        <button className="rounded bg-black text-white px-4 py-2 text-sm">Last 48 Hours</button>
+        <div className="rounded border px-3 py-2 text-sm bg-white text-gray-900">
+          {snapshotAt.toLocaleString()}
+        </div>
+      </div>
+      <div className="text-sm text-gray-600">Snapshot: Last 48 Hours</div>
       <div className="flex gap-3 items-center">
         <input
           value={q}
