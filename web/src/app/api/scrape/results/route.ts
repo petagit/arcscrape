@@ -12,7 +12,7 @@ export async function GET() {
     const limit = 200;
     const tail = rows.slice(-limit);
     return NextResponse.json({ rows: tail });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ rows: [] });
   }
 }

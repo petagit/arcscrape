@@ -29,8 +29,9 @@ export default function Home() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Upload failed");
       setData(json as ApiResult);
-    } catch (err: any) {
-      setError(err?.message || "Unexpected error");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unexpected error";
+      setError(message);
     } finally {
       setIsLoading(false);
     }

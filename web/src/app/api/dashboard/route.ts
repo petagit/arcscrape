@@ -11,13 +11,13 @@ export const revalidate = 0;
 
 export async function GET() {
   try {
-    function parseTSV(tsv: string): any[] {
+    function parseTSV(tsv: string): Array<Record<string, string>> {
       const lines = tsv.split(/\r?\n/).filter(Boolean);
       if (lines.length === 0) return [];
       const headers = lines[0].split("\t");
       return lines.slice(1).map((line) => {
         const cols = line.split("\t");
-        const obj: Record<string, any> = {};
+        const obj: Record<string, string> = {};
         headers.forEach((h, i) => (obj[h] = cols[i] ?? ""));
         return obj;
       });
@@ -31,7 +31,7 @@ export async function GET() {
     const variants = parseTSV(vCmd.stdout || "");
     const recentObs = parseTSV(oCmd.stdout || "");
     return NextResponse.json({ variants, recentObs });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ variants: [], recentObs: [] });
   }
 }

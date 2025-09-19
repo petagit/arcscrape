@@ -1,22 +1,15 @@
 import fs from "fs";
-import path from "path";
 import { parse } from "csv-parse/sync";
 import type {
   OutletCsvRow,
   NormalizedInventoryRecord,
   UploadRow,
   MatchResult,
-  MatchStatus,
 } from "@/types/inventory";
 
 export const OUTLET_CSV_PATH: string = "/Users/fengzhiping/arc-site-scraper/arcteryx_outlet.csv";
 
-function toBoolean(value: string | boolean | null | undefined): boolean {
-  if (typeof value === "boolean") return value;
-  if (value == null) return false;
-  const v = String(value).trim().toLowerCase();
-  return v === "true" || v === "1" || v === "yes";
-}
+//
 
 function normalize(text: string | null | undefined): string {
   return (text ?? "").trim().toLowerCase();

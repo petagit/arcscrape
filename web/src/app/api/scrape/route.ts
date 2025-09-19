@@ -48,8 +48,8 @@ export async function POST(req: Request) {
     currentProc.stderr?.on("data", (chunk: Buffer) => {
       broadcast(`[err] ${chunk.toString()}`);
     });
-    currentProc.on("error", (err) => {
-      broadcast(`[proc-error] ${String((err as any)?.message || err)}`);
+    currentProc.on("error", (err: Error) => {
+      broadcast(`[proc-error] ${String(err?.message || err)}`);
       currentProc = null;
     });
     currentProc.on("exit", (code) => {
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to start scrape" }, { status: 500 });
   }
 }
@@ -91,7 +91,7 @@ export async function DELETE() {
     currentProc = null;
     broadcast("Scrape stopped by user");
     return NextResponse.json({ ok: true });
-  } catch (e) {
+  } catch {
     return NextResponse.json({ error: "Failed to stop scrape" }, { status: 500 });
   }
 }
@@ -107,18 +107,15 @@ export async function GET() {
       subscribers.add(send);
       send(currentProc ? "Connected. Streaming logs..." : "No active scrape. Start one to see logs.");
 
-      const interval = setInterval(() => {
+      setInterval(() => {
         // heartbeat to keep connections alive through proxies
         try {
           send(":heartbeat");
         } catch {}
       }, 15000);
     },
-    cancel(reason) {
+    cancel() {
       // Cleanup subscriber and heartbeat
-      subscribers.forEach((fn) => {
-        // remove this stream's sender if present
-      });
       // We cannot reliably identify the specific function here, but remove and re-add others
       // Simpler: clear all and rely on active connections to re-register on next GET
       subscribers.clear();

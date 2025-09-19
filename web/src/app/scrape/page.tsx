@@ -99,8 +99,11 @@ export default function ScrapePage() {
     if (res.ok) {
       setRunning(true);
     } else {
-      const j = await res.json().catch(() => ({} as any));
-      alert(j?.error || "Failed to start scrape");
+      const j = (await res.json().catch(() => undefined)) as unknown;
+      const errMsg = (j && typeof j === "object" && "error" in j && typeof (j as { error?: unknown }).error === "string")
+        ? ((j as { error: string }).error)
+        : "Failed to start scrape";
+      alert(errMsg);
     }
   }
 
@@ -109,8 +112,11 @@ export default function ScrapePage() {
     if (res.ok) {
       setRunning(false);
     } else {
-      const j = await res.json().catch(() => ({} as any));
-      alert(j?.error || "Failed to stop scrape");
+      const j = (await res.json().catch(() => undefined)) as unknown;
+      const errMsg = (j && typeof j === "object" && "error" in j && typeof (j as { error?: unknown }).error === "string")
+        ? ((j as { error: string }).error)
+        : "Failed to stop scrape";
+      alert(errMsg);
     }
   }
 
