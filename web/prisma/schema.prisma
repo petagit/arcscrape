@@ -1,0 +1,45 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Variant {
+  hash_key       String       @id
+  product_url    String
+  color          String
+  name           String?
+  image_url      String?
+  first_seen_at  DateTime
+  last_seen_at   DateTime
+  ever_in_stock  Boolean      @default(false)
+
+  observations   Observation[]
+
+  @@map("variants")
+}
+
+model Observation {
+  obs_id             Int      @id @default(autoincrement())
+  run_id             String
+  hash_key           String
+  crawl_ts           DateTime
+  num_sizes_in_stock Int
+  sizes_in_stock     String
+  sizes_all          String
+  list_price         String?
+  sale_price         String?
+  discount           String?
+
+  variant            Variant  @relation(fields: [hash_key], references: [hash_key], onDelete: Cascade)
+
+  @@index([hash_key, crawl_ts], name: "observations_hash_ts")
+  @@map("observations")
+}

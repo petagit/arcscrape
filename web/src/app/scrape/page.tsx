@@ -39,6 +39,8 @@ export default function ScrapePage() {
   const [startedAt, setStartedAt] = useState<number | null>(null);
   const evtRef = useRef<EventSource | null>(null);
   const pollRef = useRef<NodeJS.Timeout | null>(null);
+  const [limitMode, setLimitMode] = useState<boolean>(true);
+  const [limitCount, setLimitCount] = useState<number>(10);
 
   useEffect(() => {
     const es = new EventSource("/api/scrape");
@@ -94,7 +96,7 @@ export default function ScrapePage() {
     const res = await fetch("/api/scrape", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ urls }),
+      body: JSON.stringify({ urls, limit: limitMode ? limitCount : undefined }),
     });
     if (res.ok) {
       setRunning(true);
@@ -142,6 +144,25 @@ export default function ScrapePage() {
             onChange={(e) => setUrlList(e.target.value)}
           />
         </label>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-gray-800">
+            <input
+              type="checkbox"
+              className="h-4 w-4"
+              checked={limitMode}
+              onChange={(e) => setLimitMode(e.target.checked)}
+            />
+            <span>Limit items (test mode)</span>
+          </label>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            value={limitCount}
+            onChange={(e) => setLimitCount(Math.max(1, Number(e.target.value) || 1))}
+            className="rounded border px-3 py-2 w-24"
+          />
+        </div>
         <div className="flex gap-3">
           <button
             onClick={startScrape}

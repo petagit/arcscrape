@@ -3,7 +3,8 @@ import { spawn } from "child_process";
 import fs from "fs";
 
 let currentProc: ReturnType<typeof spawn> | null = null;
-const queue: string[] = [];
+type Job = { url: string; limit?: number };
+const queue: Job[] = [];
 const subscribers = new Set<(line: string) => void>();
 
 function broadcast(line: string) {
@@ -26,21 +27,27 @@ export async function POST(req: Request) {
     const urls: string[] = Array.isArray(body?.["urls"]) && (body?.["urls"] as string[]).length > 0
       ? (body?.["urls"] as string[])
       : [((body?.["url"] as string) || "https://outlet.arcteryx.com/us/en/c/mens")];
+    const limitRaw = body?.["limit"];
+    const limit = typeof limitRaw === "number" && Number.isFinite(limitRaw) && limitRaw > 0 ? Math.floor(limitRaw) : undefined;
 
-    queue.push(...urls);
+    queue.push(...urls.map((u) => ({ url: u, limit })));
     if (currentProc) {
       return NextResponse.json({ ok: true, queued: urls.length });
     }
 
     const defaultVenv = "/Users/fengzhiping/arc-site-scraper/.venv/bin/python";
     const pythonBin = process.env.PYTHON_BIN || (fs.existsSync(defaultVenv) ? defaultVenv : "python3");
-    const nextUrl = queue.shift() as string;
-    currentProc = spawn(pythonBin, ["scraper.py", nextUrl], {
+    const nextJob = queue.shift() as Job;
+    const args = ["scraper.py", nextJob.url];
+    if (typeof nextJob.limit === "number") {
+      args.push(String(nextJob.limit));
+    }
+    currentProc = spawn(pythonBin, args, {
       cwd: "/Users/fengzhiping/arc-site-scraper",
       env: process.env,
     });
 
-    broadcast(`Started scrape: ${nextUrl}`);
+    broadcast(`Started scrape: ${nextJob.url}${nextJob.limit ? ` (limit ${nextJob.limit})` : ""}`);
 
     currentProc.stdout?.on("data", (chunk: Buffer) => {
       broadcast(chunk.toString());
@@ -57,9 +64,11 @@ export async function POST(req: Request) {
       currentProc = null;
       // Start next queued job if any
       if (queue.length > 0) {
-        const next = queue.shift() as string;
-        broadcast(`Starting next queued scrape: ${next}`);
-        currentProc = spawn(pythonBin, ["scraper.py", next], {
+        const next = queue.shift() as Job;
+        broadcast(`Starting next queued scrape: ${next.url}${next.limit ? ` (limit ${next.limit})` : ""}`);
+        const nextArgs = ["scraper.py", next.url];
+        if (typeof next.limit === "number") nextArgs.push(String(next.limit));
+        currentProc = spawn(pythonBin, nextArgs, {
           cwd: "/Users/fengzhiping/arc-site-scraper",
           env: process.env,
         });
